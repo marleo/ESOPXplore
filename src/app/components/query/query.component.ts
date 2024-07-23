@@ -13,6 +13,7 @@ import { MessageBarComponent } from '../message-bar/message-bar.component';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { UrlRetrievalService } from 'src/app/services/url-retrieval/url-retrieval.service';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 interface Shot {
   keyframe: string;
@@ -144,6 +145,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   statusTaskRemainingTime: string = ""; //property binding
 
   constructor(
+    private sanitizer: DomSanitizer,
     private globalConstants: GlobalConstantsService,
     public vbsService: VBSServerConnectionService,
     public nodeService: NodeServerConnectionService,
@@ -917,7 +919,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       return;
     }
 
-    if (qi == '*' && this.selectedQueryType !== 'videoid') {
+    if (qi == '*') {
       this.messageBar.showErrorMessage('* queries work only for VideoId');
       return;
     }
@@ -1175,43 +1177,22 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     this.querydataset = qresults.dataset;
     this.keyframeBaseURL = this.getBaseURLFromKey(qresults.dataset);
 
-    let logResults: Array<RankedAnswer> = [];
-
-    for (let i = 0; i < qresults.results.length; i++) {
+    for (let i = 0; i < qresults.results.length; i++) { //TODO: Changed to accomodate only esop videos
       let e = qresults.results[i].replace('.png', GlobalConstants.replacePNG2);
-      let filename = e.split('/');
-      let videoid = filename[0];
-      // Split the second part of the filename by underscore and take the last element
-      let parts = filename[1].split('_');
-      let framenumber = parts[parts.length - 1].split('.')[0];
-      //let framenumber = filename[1].split('_')[1].split('.')[0];
+      let filename = e.split('_');
+      let videoid = filename.slice(0, filename.length - 1).join('_');      // Split the second part of the filename by underscore and take the last element
+      let parts = filename[filename.length - 1];
+      let framenumber = parts.split('.')[0];
+
       this.queryresults.push(e);
-      //this.queryresult_serveridx.push(qresults.resultsidx[i]);
       this.queryresult_videoid.push(videoid);
       this.queryresult_frame.push(framenumber);
       this.queryresult_resultnumber.push(resultnum.toString());
       this.queryresult_videopreview.push('');
-
-      let logAnswer: ApiClientAnswer = {
-        text: undefined,
-        mediaItemName: videoid,
-        mediaItemCollectionName: this.selectedDataset,
-        start: framenumber,
-        end: framenumber
-      }
-      let logResult: RankedAnswer = {
-        answer: logAnswer,
-        rank: resultnum
-      }
-      logResults.push(logResult)
-      resultnum++;
     }
 
     this.inputfield.nativeElement.blur();
     this.nodeServerInfo = undefined;
-
-    this.vbsService.queryResults = logResults;
-    this.vbsService.submitQueryResultLog('feedbackModel', this.selectedPage);
   }
 
   closeWebSocketCLIP() {
@@ -1247,7 +1228,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     this.nodeService.sendMessageAndWait(message).subscribe((response) => {
       this.vbsService.submitFrame(videoid, parseInt(frameNumber), response.fps, response.duration, this.selectedDataset);
 
-      console.log("Submitting video " + videoid + " frame " + frameNumber + " from dataset " + this.selectedDataset + " with fps " + response.fps + " and duration " + response.duration + " seconds")
       //query event logging
       let queryEvent: QueryEvent = {
         timestamp: Date.now(),
@@ -1282,5 +1262,23 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     } else {
       return this.queryresults.filter(item => !this.isVideoSubmitted(item));
     }
+  }
+
+  queryResultVideoId(item: number) {
+    let fullid = this.queryresult_videoid[item];
+    let parts = fullid.split('_');
+    let videoid = parts.slice(0, parts.length).join('_');
+    return videoid;
+  }
+
+  constructedUrl(index: number, item: any): SafeUrl {
+    const videoId = this.queryResultVideoId(index);
+    const url = `http://${this.keyframeBaseURL}/${videoId}/${item}`;
+    console.log("Constructed URL: " + url);
+    return this.sanitizeUrl(url);
+  }
+
+  sanitizeUrl(url: string): SafeUrl {
+    return this.sanitizer.bypassSecurityTrustUrl(url);
   }
 }
