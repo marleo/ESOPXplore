@@ -12,6 +12,8 @@ import { Title } from '@angular/platform-browser';
 import { MessageBarComponent } from '../message-bar/message-bar.component';
 import { Subscription } from 'rxjs';
 import { GlobalConstantsService } from '../../shared/config/services/global-constants.service';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+
 
 const regExpBase = new RegExp('^\\d+$'); //i for case-insensitive (not important in this example anyway)
 
@@ -25,7 +27,7 @@ const regExpBase = new RegExp('^\\d+$'); //i for case-insensitive (not important
 export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication {
   videoid: string | undefined;
   framenumber: string | undefined;
-  videoURL: string = ''
+  videoURL: SafeUrl = ''
   keyframes: Array<string> = [];
   timelabels: Array<string> = [];
   framenumbers: Array<string> = [];
@@ -65,6 +67,7 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
   @ViewChildren('queryResult') queryResults!: QueryList<ElementRef>;
 
   constructor(
+    private sanitizer: DomSanitizer,
     public vbsService: VBSServerConnectionService,
     public nodeService: NodeServerConnectionService,
     public clipService: ClipServerConnectionService,
@@ -259,7 +262,7 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     for (let i = 0; i < videoinfo['shots'].length; i++) {
       let shotinfo = videoinfo['shots'][i];
       let kf = shotinfo['keyframe'];
-      this.videoURL = this.videoBaseURL + '/' + this.videoid + '.mp4';
+      this.videoURL = this.sanitizeUrl("http://" + this.videoBaseURL + this.videoid + '.mp4');
       this.keyframes.push(`${this.videoid}/${kf}`);
       let comps = kf.replace('.jpg', '').split('_');
       let fnumber = comps[comps.length - 1];
@@ -397,6 +400,10 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     }
     this.vbsService.queryEvents.push(queryEvent);
     this.vbsService.submitQueryResultLog('interaction');
+  }
+
+  sanitizeUrl(url: string): SafeUrl {
+    return this.sanitizer.bypassSecurityTrustUrl(url);
   }
 
 }

@@ -40,6 +40,8 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   private dresSuccessMessageSubscription!: Subscription;
   private urlRetrievalServiceSubscription!: Subscription;
 
+  private debounceTimer?: number;
+
   // Query-related properties
   queryinput: string = '';
   queryresults: Array<string> = [];
@@ -61,8 +63,8 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
   // Video playback and preview properties
   videoSummaryPreview: string = '';
-  videoLargePreview: string = '';
-  videoPlayPreview: string = '';
+  videoLargePreview: SafeUrl = '';
+  videoPlayPreview: SafeUrl = '';
   videoExplorePreview: Array<string> = [];
   shotPreview: Array<string> = [];
   currentContent: 'image' | 'thumbnail' | 'video' | 'shots' | 'explore' = 'image';
@@ -85,7 +87,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   isOverImage: boolean = false;
   displayedImages: Array<string> = [];
   displayedShots: Array<string> = [];
-  private debounceTimer?: number;
   batchSizeExplore: string = this.globalConstants.exploreResultsPerLoad; //how many cluster images to show in explore-preview 
   batchSizeShots: string = this.globalConstants.shotsResultsPerLoad; //how many shots to show in shot-preview
 
@@ -96,13 +97,14 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   toastImageSrc: string | null = null;
 
   // Dataset and query configuration
-  selectedDataset = 'v3c'; //'v3c-s';
+  selectedDataset = 'esop'; //'v3c-s';
   datasets = [
+    { id: 'esop', name: 'ESOP' },
     { id: 'v3c', name: 'V3C' },
     { id: 'mvk', name: 'MVK' },
     { id: 'lhe', name: 'LHE' }
   ];
-  selectedQueryType = 'textquery';
+  selectedQueryType = 'ocr-text';
   private queryTypes = [
     { id: 'textquery', name: 'Free-Text' },
     { id: 'ocr-text', name: 'OCR-Text' },
@@ -384,6 +386,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     const filteredQueryTypes = this.queryTypes.filter(qt => !['ocr-text', 'metadata', 'speech'].includes(qt.id));
     this.queryTypeMap.set('mvk', filteredQueryTypes);
     this.queryTypeMap.set('lhe', filteredQueryTypes);
+
+    const filteredQueryTypesEsop = this.queryTypes.filter(qt => !['textquery', 'metadata'].includes(qt.id));
+    this.queryTypeMap.set('esop', filteredQueryTypesEsop);
   }
 
   public getQueryTypes(key: string): typeof this.queryTypes {
@@ -397,12 +402,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   private displayVideoSummary() {
     let videoId = this.queryresult_videoid[this.selectedItem];
     let frame = this.queryresult_frame[this.selectedItem];
-    let summary = this.summaries[this.selectedSummaryIdx];
-
-    this.videoSummaryPreview = this.urlRetrievalService.getPreviewSummaryUrl(summary);
     //this.videoSummaryLargePreview = this.urlRetrievalService.getPreviewSummaryLargeUrl(summary);
-    this.videoLargePreview = this.urlRetrievalService.getThumbnailLargeUrl(videoId, frame);
-    this.videoPlayPreview = this.urlRetrievalService.getVideoUrl(videoId);
+    this.videoLargePreview = this.sanitizeUrl("http://" + this.urlRetrievalService.getThumbnailUrl(videoId, frame));
+    this.videoPlayPreview = this.sanitizeUrl("http://" + this.urlRetrievalService.getVideoUrl(videoId));
   }
 
   reloadComponent(): void {
@@ -622,7 +624,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     }, 300); // Adjust the 300ms debounce time as needed
   }
 
-
   private isNumericKey(key: string): boolean {
     return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(key);
   }
@@ -837,7 +838,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
   resetPageAndPerformQuery() {
     //this.selectedQueryType = 'textquery';
-    if (this.selectedQueryType !== 'textquery') {
+    if (this.selectedQueryType !== 'ocr-text') {
       this.temporalQueries = [];
     }
     this.selectedPage = '1';
@@ -853,7 +854,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     this.file_sim_pathPrefix = undefined
     this.previousQuery = undefined
     this.selectedPage = '1';
-    this.selectedDataset = 'v3c';
+    this.selectedDataset = 'esop';
     this.selectedVideoFiltering = 'all';
     this.pages = ['1'];
     this.clearResultArrays();
@@ -931,6 +932,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
     let querySubmission = this.queryinput;
 
+
     if (this.temporalQueries.length > 0) {
       //concatenate all input fields with "<"
       let combinedQuery = querySubmission;
@@ -995,6 +997,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
         type: this.selectedQueryType,
         value: querySubmission
       }
+
       this.vbsService.queryEvents.push(queryEvent);
 
 
@@ -1159,9 +1162,8 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
     //create pages array
     this.pages = [];
-    if (qresults.totalresults < this.globalConstants.resultsPerPage || qresults.type === 'videoid' || qresults.type === 'metadata' || qresults.type === 'speech') {
+    if (qresults.totalresults < this.globalConstants.resultsPerPage || qresults.type === 'videoid' || qresults.type === 'metadata') {
       console.log("total results: " + this.totalReturnedResults + " results per page: " + this.globalConstants.resultsPerPage + " pages: " + this.totalReturnedResults / this.globalConstants.resultsPerPage)
-
       this.pages.push('1');
     } else {
       console.log("total results: " + this.totalReturnedResults + " results per page: " + this.globalConstants.resultsPerPage + " pages: " + this.totalReturnedResults / this.globalConstants.resultsPerPage)
@@ -1176,6 +1178,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     let resultnum = (parseInt(this.selectedPage) - 1) * this.globalConstants.resultsPerPage + 1;
     this.querydataset = qresults.dataset;
     this.keyframeBaseURL = this.getBaseURLFromKey(qresults.dataset);
+
+    console.log("qc: handleQueryResponseMessage: " + qresults.results.length + " results");
+    console.log("keyframeBaseURL: " + this.keyframeBaseURL);
 
     for (let i = 0; i < qresults.results.length; i++) { //TODO: Changed to accomodate only esop videos
       let e = qresults.results[i].replace('.png', GlobalConstants.replacePNG2);
@@ -1201,10 +1206,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     }
   }
 
-  /****************************************************************************
-   * Submission to VBS Server
-   ****************************************************************************/
-
+  /***************************************************************************
+  * Submission to VBS Server *************************************************
+  ****************************************************************************/
 
   submitResult(index: number) {
     let videoid = this.queryresult_videoid[index];
@@ -1271,10 +1275,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     return videoid;
   }
 
-  constructedUrl(index: number, item: any): SafeUrl {
+  constructedUrl(index: number, item: any): SafeUrl { //TODO: break loop?
     const videoId = this.queryResultVideoId(index);
     const url = `http://${this.keyframeBaseURL}/${videoId}/${item}`;
-    console.log("Constructed URL: " + url);
     return this.sanitizeUrl(url);
   }
 

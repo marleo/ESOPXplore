@@ -45,6 +45,8 @@ export class UrlRetrievalService {
   }
 
   getVideoUrl(videoId: string) {
+    console.log("basevideourl: ", this.baseVideosUrl);
+    console.log("videoId: ", videoId);
     return `${this.baseVideosUrl}${videoId}.mp4`;
   }
 }
