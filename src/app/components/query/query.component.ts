@@ -920,7 +920,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       return;
     }
 
-    if (qi == '*') {
+    if (qi == '*' && this.selectedQueryType !== 'videoid') {
       this.messageBar.showErrorMessage('* queries work only for VideoId');
       return;
     }
