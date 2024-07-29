@@ -253,9 +253,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
       this.vcategories = videoinfo['categories'];
       this.vtexts = videoinfo['texts'];
       this.vspeech = videoinfo['speech'];
-
-      console.log("texts: " + this.vtexts);
-      console.log("speech: " + this.vspeech);
     }
     this.keyframes = [];
     this.framenumbers = [];
