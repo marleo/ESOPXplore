@@ -28,7 +28,7 @@
     <div (mouseover)="showButtons = i" (mouseleave)="showButtons = -1"
         class="{{getQueryResultCSSClass(this.framenumbers[i])}}" *ngFor="let item of keyframes; let i = index"
         #queryResult>
-        <img [src]='sanitizeUrl("http://" + keyframeBaseURL+ "/" + item)' width="{{imgWidth}}" height="{{imgHeight}}" (click)="gotoTimeOfShot(i)">
+        <img [src]='sanitizeUrl(keyframeBaseURL+ "/" + item)' width="{{imgWidth}}" height="{{imgHeight}}" (click)="gotoTimeOfShot(i)">
         <div class="lefttopcorner">
             <span class="label">{{timelabels[i]}}</span>
             <!--<span class="label">

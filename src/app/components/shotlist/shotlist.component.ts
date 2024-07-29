@@ -262,7 +262,7 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     for (let i = 0; i < videoinfo['shots'].length; i++) {
       let shotinfo = videoinfo['shots'][i];
       let kf = shotinfo['keyframe'];
-      this.videoURL = this.sanitizeUrl("http://" + this.videoBaseURL + this.videoid + '.mp4');
+      this.videoURL = this.sanitizeUrl(this.videoBaseURL + this.videoid + '.mp4');
       this.keyframes.push(`${this.videoid}/${kf}`);
       let comps = kf.replace('.jpg', '').split('_');
       let fnumber = comps[comps.length - 1];
