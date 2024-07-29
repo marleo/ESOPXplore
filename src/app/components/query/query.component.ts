@@ -403,8 +403,8 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     let videoId = this.queryresult_videoid[this.selectedItem];
     let frame = this.queryresult_frame[this.selectedItem];
     //this.videoSummaryLargePreview = this.urlRetrievalService.getPreviewSummaryLargeUrl(summary);
-    this.videoLargePreview = this.sanitizeUrl("http://" + this.urlRetrievalService.getThumbnailUrl(videoId, frame));
-    this.videoPlayPreview = this.sanitizeUrl("http://" + this.urlRetrievalService.getVideoUrl(videoId));
+    this.videoLargePreview = this.sanitizeUrl(this.urlRetrievalService.getThumbnailUrl(videoId, frame));
+    this.videoPlayPreview = this.sanitizeUrl(this.urlRetrievalService.getVideoUrl(videoId));
   }
 
   reloadComponent(): void {
@@ -1277,7 +1277,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
   constructedUrl(index: number, item: any): SafeUrl { //TODO: break loop?
     const videoId = this.queryResultVideoId(index);
-    const url = `http://${this.keyframeBaseURL}/${videoId}/${item}`;
+    const url = `${this.keyframeBaseURL}/${videoId}/${item}`;
     return this.sanitizeUrl(url);
   }
 
