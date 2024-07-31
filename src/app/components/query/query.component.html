@@ -93,21 +93,9 @@
           (click)="setContent('image')">
           <mat-icon>crop_square</mat-icon>
         </button>
-        <button class="top-left-button" [class.active]="activeButton === 'thumbnail'" mat-icon-button matTooltip="Summary Preview" matTooltipPosition="above"
-          (click)="setContent('thumbnail')">
-          <mat-icon>grid_view</mat-icon>
-        </button>
         <button class="top-left-button" [class.active]="activeButton === 'video'" mat-icon-button matTooltip="Video Preview" matTooltipPosition="above"
           (click)="setContent('video')">
           <mat-icon>videocam</mat-icon>
-        </button>
-        <button class="top-left-button" [class.active]="activeButton === 'shots'" mat-icon-button matTooltip="Shotlist" matTooltipPosition="above"
-          (click)="setContent('shots')">
-          <mat-icon>search</mat-icon>
-        </button>
-        <button class="top-left-button" [class.active]="activeButton === 'explore'" mat-icon-button matTooltip="Explore View" matTooltipPosition="above"
-          (click)="setContent('explore')">
-          <mat-icon>explore</mat-icon>
         </button>
       </div>
       <button class="videosummaryheader" matTooltip="Go to Shotlist" matTooltipPosition="above"
