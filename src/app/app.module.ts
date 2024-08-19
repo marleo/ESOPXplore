@@ -13,8 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ShotlistComponent } from './components/shotlist/shotlist.component';
 import { ApiModule, Configuration } from 'openapi/dres';
 import { GlobalConstants } from './shared/config/global-constants';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { VBSServerConnectionService } from './services/vbsserver-connection/vbsserver-connection.service';
+import { HttpClientModule } from '@angular/common/http';
 import { QueryComponent } from './components/query/query.component';
 
 import { MatInputModule } from '@angular/material/input';
@@ -73,7 +72,7 @@ import { ToastComponent } from './dialogues/toast/toast.component';
     MatDialogModule,
     ScrollingModule
   ],
-  providers: [VBSServerConnectionService],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

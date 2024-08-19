@@ -1,13 +1,11 @@
 import { ViewChild, ElementRef, Component, AfterViewInit, Renderer2 } from '@angular/core';
 import { HostListener } from '@angular/core';
 import { GlobalConstants, WSServerStatus, formatAsTime, QueryType, getTimestampInSeconds } from '../../shared/config/global-constants';
-import { VBSServerConnectionService } from '../../services/vbsserver-connection/vbsserver-connection.service';
 import { VbsServiceCommunication } from '../../shared/interfaces/vbs-task-interface';
 import { GlobalConstantsService } from '../../shared/config/services/global-constants.service';
 import { NodeServerConnectionService } from '../../services/nodeserver-connection/nodeserver-connection.service';
 import { ClipServerConnectionService } from '../../services/clipserver-connection/clipserver-connection.service';
 import { ActivatedRoute } from '@angular/router';
-import { QueryEvent, QueryEventCategory, RankedAnswer, ApiClientAnswer } from 'openapi/dres';
 import { Title } from '@angular/platform-browser';
 import { MessageBarComponent } from '../message-bar/message-bar.component';
 import { Subscription } from 'rxjs';
@@ -17,10 +15,6 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 interface Shot {
   keyframe: string;
-}
-
-interface temporalQueries {
-  query: string;
 }
 
 @Component({
@@ -36,11 +30,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   @ViewChild('scrollableContainer') scrollableContainer!: ElementRef<HTMLDivElement>;
 
   // Subscriptions for handling events
-  private dresErrorMessageSubscription!: Subscription;
-  private dresSuccessMessageSubscription!: Subscription;
   private urlRetrievalServiceSubscription!: Subscription;
-
-  private debounceTimer?: number;
 
   // Query-related properties
   queryinput: string = '';
@@ -53,8 +43,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   queryType: string = '';
   previousQuery: any | undefined;
   querydataset: string = '';
-  submittedStatus: { [key: string]: boolean } = {};
-  submittedFrame: string = "";
+
 
   // Metadata and summaries for video analysis
   metadata: any;
@@ -67,10 +56,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   videoPlayPreview: SafeUrl = '';
   videoExplorePreview: Array<string> = [];
   shotPreview: Array<string> = [];
-  currentContent: 'image' | 'thumbnail' | 'video' | 'shots' | 'explore' = 'image';
+  currentContent: 'image' | 'video' = 'image';
 
   // UI state and navigation properties
-  temporalQueries: temporalQueries[] = [];
   selectedItem = 0;
   showPreview = false;
   showHelpActive = false;
@@ -82,13 +70,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   showButtons = -1;
   activeButton: string = 'image';
   showConfigForm = false;
-  columnsCountExplore: number = 3;
-  columnsCountShots: number = 8;
-  isOverImage: boolean = false;
-  displayedImages: Array<string> = [];
-  displayedShots: Array<string> = [];
-  batchSizeExplore: string = this.globalConstants.exploreResultsPerLoad; //how many cluster images to show in explore-preview 
-  batchSizeShots: string = this.globalConstants.shotsResultsPerLoad; //how many shots to show in shot-preview
 
   //Toast
   showToast: boolean = false;
@@ -99,16 +80,11 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   // Dataset and query configuration
   selectedDataset = 'esop'; //'v3c-s';
   datasets = [
-    { id: 'esop', name: 'ESOP' },
-    { id: 'v3c', name: 'V3C' },
-    { id: 'mvk', name: 'MVK' },
-    { id: 'lhe', name: 'LHE' }
+    { id: 'esop', name: 'ESOP' }
   ];
   selectedQueryType = 'ocr-text';
   private queryTypes = [
-    { id: 'textquery', name: 'Free-Text' },
     { id: 'ocr-text', name: 'OCR-Text' },
-    { id: 'metadata', name: 'Metadata' },
     { id: 'speech', name: 'Speech' },
     { id: 'videoid', name: 'VideoId' }
   ];
@@ -149,7 +125,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   constructor(
     private sanitizer: DomSanitizer,
     private globalConstants: GlobalConstantsService,
-    public vbsService: VBSServerConnectionService,
     public nodeService: NodeServerConnectionService,
     public clipService: ClipServerConnectionService,
     public urlRetrievalService: UrlRetrievalService,
@@ -162,24 +137,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   }
 
   ngOnInit() {
-    this.dresErrorMessageSubscription = this.vbsService.errorMessageEmitter.subscribe(msg => {
-      this.messageBar.showErrorMessage(msg);
-    })
-    this.dresSuccessMessageSubscription = this.vbsService.successMessageEmitter.subscribe(msg => {
-      this.messageBar.showSuccessMessage(msg);
-      let message = {
-        type: 'videosubmission',
-        videoId: this.submittedFrame
-      }
-      this.sendToNodeServer(message);
-    })
-
-    let selectedEvaluation = localStorage.getItem('selectedEvaluation');
-    if (selectedEvaluation) {
-      console.log('selected evaluation is ' + selectedEvaluation);
-      this.vbsService.selectedServerRun = parseInt(selectedEvaluation);
-    }
-
     this.urlRetrievalServiceSubscription = this.urlRetrievalService.explorationResults$.subscribe(results => {
       if (results) {
         this.videoExplorePreview = results;
@@ -244,37 +201,10 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
                 }
               } else if (m.type === 'info') {
                 this.nodeServerInfo = m.message;
-              } else if (m.type === 'videosummaries') {
-                this.summaries = msg.content[0]['summaries'];
-                this.selectedSummaryIdx = Math.floor(this.summaries.length / 2);
-                this.displayVideoSummary();
-              } else if (m.type === 'clusterimage') {
-                const resultsArray: Array<string> = m.results;
-                const updatedResults = resultsArray.map(image => this.globalConstants.summariesBaseURL + '/' + image);
-                this.videoExplorePreview = updatedResults;
-                this.displayedImages = [];
-                this.loadMoreImages();
               } else if (m.type === 'videoinfo') {
                 const keyframes: Array<string> = m.content[0].shots.map((shot: Shot) => shot.keyframe); //get all keyframes
                 const updatedResults = keyframes.map(keyframe => this.globalConstants.thumbsBaseURL + '/' + this.queryresult_videoid[this.selectedItem] + "/" + keyframe);
                 this.shotPreview = updatedResults;
-                this.displayedShots = [];
-                this.loadMoreShots();
-              } else if (m.type === 'updatesubmissions') {
-                localStorage.removeItem('submittedFrames');
-
-                m.videoId.forEach((id: string) => {
-                  this.markFrameAsSubmitted(id);
-                });
-              } else if (m.type === 'share') {
-                console.log('qc: share-url: ' + m.url);
-                let videoid = m.url.split('/')[2];
-                let frameid = m.url.split('/')[3];
-
-                this.showToast = true;
-                this.toastMessage = "User shared video: " + videoid;
-                this.toastLink = m.url;
-                this.toastImageSrc = this.urlRetrievalService.getThumbnailUrl(videoid, frameid);
               }
             } else {
               this.handleQueryResponseMessage(msg);
@@ -295,21 +225,9 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
         this.handleQueryResponseMessage(msg);
       }
     });
-
-    //repeatedly retrieve task info
-    setInterval(() => {
-      this.requestTaskInfo();
-    }, 1000);
-
-    const submittedFrames = JSON.parse(localStorage.getItem('submittedFrames') || '[]');
-    submittedFrames.forEach((item: string) => {
-      this.submittedStatus[item] = true;
-    });
   }
 
   ngOnDestroy() {
-    this.dresErrorMessageSubscription.unsubscribe();
-    this.dresSuccessMessageSubscription.unsubscribe();
     this.urlRetrievalServiceSubscription.unsubscribe();
   }
 
@@ -344,20 +262,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
   handleToastClose() { //Close the toast message
     this.showToast = false;
-  }
-
-  loadMoreShots() { //Load more images in Shot Preview
-    const startIndex = this.displayedShots.length;
-    const endIndex = startIndex + parseInt(this.batchSizeShots);
-    const nextBatch = this.shotPreview.slice(startIndex, endIndex);
-    this.displayedShots = [...this.displayedShots, ...nextBatch];
-  }
-
-  loadMoreImages() { //Load more images in Explore Preview
-    const startIndex = this.displayedImages.length;
-    const endIndex = startIndex + parseInt(this.batchSizeExplore);
-    const nextBatch = this.videoExplorePreview.slice(startIndex, endIndex);
-    this.displayedImages = [...this.displayedImages, ...nextBatch];
   }
 
   playVideoAtFrame(): void { //Start video preview at the selected frame
@@ -423,15 +327,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     this.showConfigForm = !this.showConfigForm;
   }
 
-  requestTaskInfo() {
-    if (this.vbsService.serverRunIDs.length > 0 && this.vbsService.selectedServerRun === undefined) {
-      this.vbsService.selectedServerRun = 0;
-    }
-    if (this.vbsService.selectedServerRun !== undefined) {
-      this.vbsService.getClientTaskInfo(this.vbsService.serverRunIDs[this.vbsService.selectedServerRun], this);
-    }
-  }
-
   saveToHistory(msg: QueryType) {
     if (msg.query === '') {
       return;
@@ -462,15 +357,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       let queryHistory: Array<QueryType> = [msg];
       localStorage.setItem('history', JSON.stringify(queryHistory));
     }
-  }
-
-  addTemporalQuery() {
-    if (this.temporalQueries.length < 3)
-      this.temporalQueries.push({ query: '' });
-  }
-
-  removeTemporalQuery(index: number) {
-    this.temporalQueries.splice(index, 1);
   }
 
   newTab(): void {
@@ -508,35 +394,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
           // Handle other arrow key operations
           this.handleArrowKeys(event);
           break;
-        case 'ArrowUp':
-          if (this.currentContent === 'explore' || this.currentContent === 'shots') {
-            const element = this.scrollableContainer.nativeElement;
-            element.scrollBy(0, -100);
-          } else if (this.showPreview && this.selectedSummaryIdx > 0) {
-
-            this.selectedSummaryIdx -= 1;
-            this.displayVideoSummary();
-          }
-          break;
-        case 'ArrowDown':
-          if (this.currentContent === 'explore' || this.currentContent === 'shots') {
-            const element = this.scrollableContainer.nativeElement;
-            element.scrollBy(0, 100);
-          } else if (this.showPreview && this.selectedSummaryIdx < this.summaries.length - 1) {
-            this.selectedSummaryIdx += 1;
-            this.displayVideoSummary();
-          }
-          break;
-        case ' ':
-          if (this.currentContent === 'explore') {
-            this.loadMoreImages();
-          } else if (this.currentContent === 'shots') {
-            this.loadMoreShots();
-          } else {
-            this.showPreview = !this.showPreview;
-            if (this.showPreview) this.showVideoPreview();
-          }
-          break;
         default:
           if (this.isNumericKey(event.key) && !this.showPreview) {
             this.gotoPage(event.key);
@@ -546,16 +403,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
                 this.setContent('image');
                 break;
               case '2':
-                this.setContent('thumbnail');
-                break;
-              case '3':
                 this.setContent('video');
-                break;
-              case '4':
-                this.setContent('shots');
-                break;
-              case '5':
-                this.setContent('explore');
                 break;
               case '0':
                 this.showVideoShots(this.queryresult_videoid[this.selectedItem], this.queryresult_frame[this.selectedItem])
@@ -573,20 +421,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     if (shiftKey) {
       if (!this.showPreview) {
         key === 'ArrowRight' ? this.nextPage() : this.prevPage();
-      } else {
-        if (this.currentContent === 'explore') {
-          if (key === 'ArrowRight' && this.columnsCountExplore < 5) {
-            this.columnsCountExplore += 1;
-          } else if (key === 'ArrowLeft' && this.columnsCountExplore > 1) {
-            this.columnsCountExplore -= 1;
-          }
-        } else if (this.currentContent === 'shots') {
-          if (key === 'ArrowRight' && this.columnsCountShots < 10) {
-            this.columnsCountShots += 1;
-          } else if (key === 'ArrowLeft' && this.columnsCountShots > 5) {
-            this.columnsCountShots -= 1;
-          }
-        }
       }
     } else {
       let toShow = this.showPreview;
@@ -599,29 +433,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
         this.showVideoPreview();
       }
     }
-  }
-
-  @HostListener('wheel', ['$event'])
-  handleScrollEvent(event: WheelEvent) {
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
-
-    this.debounceTimer = window.setTimeout(() => {
-      if (this.isOverImage) {
-        event.preventDefault();
-        // Your existing logic
-        if (event.deltaY < 0) { // Scrolling up
-          if (this.showPreview && this.selectedSummaryIdx > 0) {
-            this.selectedSummaryIdx -= 1;
-            this.displayVideoSummary();
-          }
-        } else if (event.deltaY > 0) { // Scrolling down
-          if (this.showPreview && this.selectedSummaryIdx < this.summaries.length - 1) {
-            this.selectedSummaryIdx += 1;
-            this.displayVideoSummary();
-          }
-        }
-      }
-    }, 300); // Adjust the 300ms debounce time as needed
   }
 
   private isNumericKey(key: string): boolean {
@@ -709,22 +520,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   showVideoPreview() {
     this.displayVideoSummary();
     this.requestVideoSummaries(this.queryresult_videoid[this.selectedItem]);
-
-    //query event logging
-    let queryEvent: QueryEvent = {
-      timestamp: Date.now(),
-      category: QueryEventCategory.BROWSING,
-      type: "videosummary",
-      value: this.queryresult_videoid[this.selectedItem]
-    }
-    this.vbsService.queryEvents.push(queryEvent);
-    //this.vbsService.submitQueryResultLog('interaction');
-
-    if (this.currentContent === 'explore') {
-      this.loadExploreImages(this.queryresult_videoid[this.selectedItem]);
-    } else if (this.currentContent === 'shots') {
-      this.loadShotList(this.queryresult_videoid[this.selectedItem]);
-    }
   }
 
   closeVideoPreview() {
@@ -737,7 +532,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     this.videoExplorePreview = [];
   }
 
-  setContent(content: 'image' | 'thumbnail' | 'video' | 'shots' | 'explore') {
+  setContent(content: 'image' | 'video') {
     this.currentContent = content;
     this.activeButton = content;
 
@@ -837,17 +632,12 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   }
 
   resetPageAndPerformQuery() {
-    //this.selectedQueryType = 'textquery';
-    if (this.selectedQueryType !== 'ocr-text') {
-      this.temporalQueries = [];
-    }
     this.selectedPage = '1';
     this.performTextQuery();
   }
 
   resetQuery() {
     this.queryinput = '';
-    this.temporalQueries = [];
     this.inputfield.nativeElement.focus();
     this.inputfield.nativeElement.select();
     this.file_sim_keyframe = undefined
@@ -871,14 +661,11 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
   private clearResultArrays() {
     this.queryresults = [];
-    //this.queryresult_serveridx = [];
     this.queryresult_resultnumber = [];
     this.queryresult_videoid = [];
     this.queryresult_frame = [];
     this.queryresult_videopreview = [];
     this.queryTimestamp = 0;
-    this.vbsService.queryEvents = []
-    this.vbsService.queryResults = []
   }
 
   /****************************************************************************
@@ -932,17 +719,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
     let querySubmission = this.queryinput;
 
-
-    if (this.temporalQueries.length > 0) {
-      //concatenate all input fields with "<"
-      let combinedQuery = querySubmission;
-
-      for (let query of this.temporalQueries) {
-        combinedQuery += "<" + query.query;
-      }
-      querySubmission = combinedQuery;
-    }
-
     this.showHelpActive = false;
     this.showHistoryActive = false;
     this.showPreview = false;
@@ -989,18 +765,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       if (saveToHist) {
         this.saveToHistory(msg);
       }
-
-      //query event logging
-      let queryEvent: QueryEvent = {
-        timestamp: Date.now(),
-        category: QueryEventCategory.TEXT,
-        type: this.selectedQueryType,
-        value: querySubmission
-      }
-
-      this.vbsService.queryEvents.push(queryEvent);
-
-
     } else {
       alert(`CLIP connection down: ${this.clipService.connectionState}. Try reconnecting by pressing the red button!`);
     }
@@ -1024,16 +788,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
       this.sendToNodeServer(msg);
       this.saveToHistory(msg);
-
-      //query event logging
-      let queryEvent: QueryEvent = {
-        timestamp: Date.now(),
-        category: QueryEventCategory.IMAGE,
-        type: "similarityquery",
-        value: `result# ${this.queryresult_resultnumber[serveridx]}`
-      }
-      this.vbsService.queryEvents.push(queryEvent);
-
     }
   }
 
@@ -1064,15 +818,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
       this.sendToNodeServer(msg);
       this.saveToHistory(msg);
-
-      //query event logging
-      let queryEvent: QueryEvent = {
-        timestamp: Date.now(),
-        category: QueryEventCategory.BROWSING,
-        type: "filesimilarityquery",
-        value: `${keyframe}`
-      }
-      this.vbsService.queryEvents.push(queryEvent);
     }
   }
 
@@ -1086,14 +831,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     this.file_sim_keyframe = undefined;
     this.file_sim_pathPrefix = undefined;
     this.performQuery(false);
-
-    let queryEvent: QueryEvent = {
-      timestamp: Date.now(),
-      category: QueryEventCategory.OTHER,
-      type: "historyquery",
-      value: hist.query
-    }
-    this.vbsService.queryEvents.push(queryEvent);
   }
 
   performHistoryLastQuery() {
@@ -1108,15 +845,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       }
 
       this.sendToCLIPServer(msg);
-
-      //query event logging
-      let queryEvent: QueryEvent = {
-        timestamp: Date.now(),
-        category: QueryEventCategory.OTHER,
-        type: "historylastquery",
-        value: msg.query
-      }
-      this.vbsService.queryEvents.push(queryEvent);
     }
   }
 
@@ -1210,62 +938,8 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   * Submission to VBS Server *************************************************
   ****************************************************************************/
 
-  submitResult(index: number) {
-    let videoid = this.queryresult_videoid[index];
-    let keyframe = this.queryresults[index];
-    let comps = keyframe.split('_');
-    let frameNumber = comps[comps.length - 1].split('.')[0]
-
-    this.submittedFrame = videoid;
-
-    let msg = {
-      type: "videofps",
-      synchronous: true,
-      videoid: videoid
-    };
-
-    let message = {
-      source: 'appcomponent',
-      content: msg
-    };
-
-    this.nodeService.sendMessageAndWait(message).subscribe((response) => {
-      this.vbsService.submitFrame(videoid, parseInt(frameNumber), response.fps, response.duration, this.selectedDataset);
-
-      //query event logging
-      let queryEvent: QueryEvent = {
-        timestamp: Date.now(),
-        category: QueryEventCategory.OTHER,
-        type: "submitFrame",
-        value: videoid + ',' + frameNumber
-      }
-      this.vbsService.queryEvents.push(queryEvent);
-      this.vbsService.submitQueryResultLog('interaction');
-    });
-  }
-
-  markFrameAsSubmitted(videoid: string) {
-    this.submittedStatus[videoid] = true;
-
-    let submittedFrames = JSON.parse(localStorage.getItem('submittedFrames') || '[]');
-    if (!submittedFrames.includes(videoid)) {
-      submittedFrames.push(videoid);
-      localStorage.setItem('submittedFrames', JSON.stringify(submittedFrames));
-    }
-  }
-
-  isVideoSubmitted(keyframe: string): boolean {
-    const videoid = keyframe.split('/')[0];
-    const submittedVideoIds = JSON.parse(localStorage.getItem('submittedFrames') || '[]');
-    return submittedVideoIds.includes(videoid);
-  }
-
   get displayQueryResult() {
-    if (this.globalConstants.showSubmittedFrames) {
-      return this.queryresults;
-    } else {
-      return this.queryresults.filter(item => !this.isVideoSubmitted(item));
-    }
+    return this.queryresults;
   }
 
   queryResultVideoId(item: number) {

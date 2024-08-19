@@ -1,22 +1,14 @@
 import { ViewChild, ElementRef, AfterViewInit, Component } from '@angular/core';
 import { ViewChildren, QueryList } from '@angular/core';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import { VBSServerConnectionService } from '../../services/vbsserver-connection/vbsserver-connection.service';
+import { ActivatedRoute } from '@angular/router';
 import { VbsServiceCommunication } from '../../shared/interfaces/vbs-task-interface';
 import { NodeServerConnectionService } from '../../services/nodeserver-connection/nodeserver-connection.service';
 import { ClipServerConnectionService } from '../../services/clipserver-connection/clipserver-connection.service';
-import { formatAsTime, getTimestampInSeconds, GlobalConstants, WSServerStatus } from '../../shared/config/global-constants';
-import { mdiConsoleLine } from '@mdi/js';
-import { ApiClientAnswer, QueryEvent, QueryEventCategory, RankedAnswer } from 'openapi/dres';
+import { formatAsTime, GlobalConstants, WSServerStatus } from '../../shared/config/global-constants';
 import { Title } from '@angular/platform-browser';
 import { MessageBarComponent } from '../message-bar/message-bar.component';
-import { Subscription } from 'rxjs';
 import { GlobalConstantsService } from '../../shared/config/services/global-constants.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-
-
-const regExpBase = new RegExp('^\\d+$'); //i for case-insensitive (not important in this example anyway)
-
 
 @Component({
   selector: 'app-shotlist',
@@ -32,9 +24,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
   timelabels: Array<string> = [];
   framenumbers: Array<string> = [];
 
-  private dresErrorMessageSubscription!: Subscription;
-  private dresSuccessMessageSubscription!: Subscription;
-
   public statusTaskInfoText: string = ""; //property binding
   statusTaskRemainingTime: string = ""; //property binding
 
@@ -46,16 +35,9 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
   datasetBase: string = '';
   fps = 0.0;
   vduration = 0;
-  vdescription = '';
-  vchannel = '';
-  vtitle = '';
-  vuploaddate = '';
-  vtags = [];
-  vcategories = [];
   vtexts = [];
   vspeech: any | undefined;
 
-  topicanswer: string = '';
   answerFieldHasFocus = false;
   showVideoBox = true;
 
@@ -68,40 +50,22 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
 
   constructor(
     private sanitizer: DomSanitizer,
-    public vbsService: VBSServerConnectionService,
     public nodeService: NodeServerConnectionService,
     public clipService: ClipServerConnectionService,
     private titleService: Title,
     private route: ActivatedRoute,
-    private router: Router,
     private globalConstants: GlobalConstantsService
   ) { }
 
   ngOnInit() {
-    console.log('shotlist component (slc) initiated');
-
-    this.dresErrorMessageSubscription = this.vbsService.errorMessageEmitter.subscribe(msg => {
-      this.messageBar.showErrorMessage(msg);
-    })
-    this.dresSuccessMessageSubscription = this.vbsService.successMessageEmitter.subscribe(msg => {
-      this.messageBar.showSuccessMessage(msg);
-    })
-
-    let selectedEvaluation = localStorage.getItem('selectedEvaluation');
-    if (selectedEvaluation) {
-      console.log('selected evaluation is ' + selectedEvaluation);
-      this.vbsService.selectedServerRun = parseInt(selectedEvaluation);
-    }
-
     this.route.paramMap.subscribe(paraMap => {
       this.videoid = paraMap.get('id')?.toString();
       this.framenumber = paraMap.get('id2')?.toString();
       this.titleService.setTitle('v' + this.videoid);
       console.log(`slc: ${this.videoid} ${this.framenumber}`);
-      this.keyframeBaseURL = this.globalConstants.thumbsBaseURL; //GlobalConstants.thumbsBaseURL;
-      this.videoBaseURL = this.globalConstants.videosBaseURL; //GlobalConstants.videosBaseURL;
-      this.datasetBase = 'keyframes'; //'thumbsXL';
-
+      this.keyframeBaseURL = this.globalConstants.thumbsBaseURL;
+      this.videoBaseURL = this.globalConstants.videosBaseURL;
+      this.datasetBase = 'keyframes';
     });
 
     //already connected?
@@ -109,21 +73,13 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
       this.requestDataFromDB();
     }
     this.nodeService.messages.subscribe(msg => {
-      //console.log(`slc: response from node service: ${msg}`)
       if ('wsstatus' in msg) {
-        //console.log('slc: node-service: connected');
         this.requestDataFromDB();
       } else {
         let result = msg.content;
-        //console.log("slc: response from node-service: " + result[0]);
         this.loadVideoShots(result[0]);
       }
     });
-
-    //repeatedly retrieve task info
-    setInterval(() => {
-      this.requestTaskInfo();
-    }, 1000);
   }
 
   ngAfterViewInit(): void {
@@ -140,28 +96,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
       const offset = 50; // Adjust this value as needed
       window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
     }
-  }
-
-
-  requestTaskInfo() {
-    if (this.vbsService.serverRunIDs.length > 0 && this.vbsService.selectedServerRun === undefined) {
-      this.vbsService.selectedServerRun = 0;
-    }
-    if (this.vbsService.selectedServerRun !== undefined) {
-      this.vbsService.getClientTaskInfo(this.vbsService.serverRunIDs[this.vbsService.selectedServerRun], this);
-    }
-  }
-
-  selectRun() {
-
-  }
-
-  getRemainingTaskTime() {
-    if (this.vbsService.selectedServerRun !== undefined) {
-      let remainingTime = this.vbsService.serverRunsRemainingSecs.get(this.vbsService.serverRunIDs[this.vbsService.selectedServerRun]);
-      return remainingTime;
-    }
-    return "";
   }
 
   classifyVideoId(videoId: string) {
@@ -242,15 +176,11 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
 
   loadVideoShots(videoinfo: any) {
     console.log(videoinfo);
-    this.fps = parseFloat(videoinfo['fps']);
+    let fps = parseFloat(videoinfo['fps']);
+    this.fps = Math.round(fps * 100) / 100; //round to 2 decimal places
     if ('duration' in videoinfo) {
-      this.vduration = videoinfo['duration'];
-      this.vdescription = videoinfo['description'];
-      this.vtitle = videoinfo['title'];
-      this.vuploaddate = videoinfo['uploaddate'];
-      this.vchannel = videoinfo['channel'];
-      this.vtags = videoinfo['tags'];
-      this.vcategories = videoinfo['categories'];
+      let vduration = videoinfo['duration'];
+      this.vduration = Math.round(vduration * 100) / 100;
       this.vtexts = videoinfo['texts'];
       this.vspeech = videoinfo['speech'];
     }
@@ -258,7 +188,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     this.framenumbers = [];
     this.timelabels = [];
 
-    let logResults: Array<RankedAnswer> = [];
     for (let i = 0; i < videoinfo['shots'].length; i++) {
       let shotinfo = videoinfo['shots'][i];
       let kf = shotinfo['keyframe'];
@@ -268,32 +197,7 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
       let fnumber = comps[comps.length - 1];
       this.framenumbers.push(fnumber);
       this.timelabels.push(formatAsTime(fnumber, this.fps));
-
-      let logAnswer: ApiClientAnswer = {
-        text: undefined,
-        mediaItemName: this.videoid,
-        mediaItemCollectionName: '',
-        start: fnumber, // / this.fps * 1000, 
-        end: fnumber, // / this.fps * 1000
-      }
-      let logResult: RankedAnswer = {
-        answer: logAnswer,
-        rank: (i + 1)
-      }
-      logResults.push(logResult)
     }
-
-    this.vbsService.queryResults = logResults;
-    this.vbsService.submitQueryResultLog('shotlist');
-  }
-
-
-  connectToVBSServer() {
-    this.vbsService.connect();
-  }
-
-  disconnectFromVBSServer() {
-    //this.vbsService.logout(this);
   }
 
   checkNodeConnection() {
@@ -305,14 +209,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
   checkCLIPConnection() {
     if (this.clipService.connectionState !== WSServerStatus.CONNECTED) {
       this.clipService.connectToServer();
-    }
-  }
-
-  checkVBSServerConnection() {
-    if (this.vbsService.vbsServerState == WSServerStatus.UNSET || this.vbsService.vbsServerState == WSServerStatus.DISCONNECTED) {
-      this.connectToVBSServer();
-    } else if (this.vbsService.vbsServerState == WSServerStatus.CONNECTED) {
-      this.disconnectFromVBSServer();
     }
   }
 
@@ -331,8 +227,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     if (this.videoplayer.nativeElement.paused) {
       this.videoplayer.nativeElement.play();
     }
-
-    //window.scrollTo(0, 0);
   }
 
   gotoTimeOfFrame(frame: number) {
@@ -346,60 +240,6 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
 
   onAnswerInputBlur() {
     this.answerFieldHasFocus = false
-  }
-
-
-
-
-  /****************************************************************************
-   * Submission to VBS Server
-   ****************************************************************************/
-
-  submitCurrentTime() {
-    let currentDataSet = this.classifyVideoId(this.videoid!);
-    console.log('submitting time: ' + this.currentVideoTime + ' for video ' + this.videoid! + ' with fps=' + this.fps + " and dataset " + currentDataSet);
-    this.vbsService.submitFrame(this.videoid!, Math.round(this.currentVideoTime), this.fps, this.vduration, currentDataSet);
-
-    //query event logging
-    let queryEvent: QueryEvent = {
-      timestamp: Date.now(),
-      category: QueryEventCategory.OTHER,
-      type: 'submitTime',
-      value: this.videoid! + ',' + this.currentVideoTime
-    }
-    this.vbsService.queryEvents.push(queryEvent);
-    this.vbsService.submitQueryResultLog('interaction');
-  }
-
-  submitResult(index: number) {
-    let currentDataSet = this.classifyVideoId(this.videoid!);
-    console.log('submitting frame: ' + this.framenumbers[index] + ' for video ' + this.videoid! + ' with fps=' + this.fps + " and dataset " + currentDataSet);
-    this.vbsService.submitFrame(this.videoid!, parseInt(this.framenumbers[index]), this.fps, this.vduration, currentDataSet);
-
-    //query event logging
-    let queryEvent: QueryEvent = {
-      timestamp: Date.now(),
-      category: QueryEventCategory.OTHER,
-      type: 'submitShot',
-      value: this.videoid! + ',' + index + ',' + this.framenumbers[index]
-    }
-    this.vbsService.queryEvents.push(queryEvent);
-    this.vbsService.submitQueryResultLog('interaction');
-  }
-
-  sendTopicAnswer() {
-    console.log('submitting text: ' + this.topicanswer);
-    this.vbsService.submitText(this.topicanswer)
-
-    //query event logging
-    let queryEvent: QueryEvent = {
-      timestamp: Date.now(),
-      category: QueryEventCategory.OTHER,
-      type: "submitAnswer2",
-      value: this.topicanswer
-    }
-    this.vbsService.queryEvents.push(queryEvent);
-    this.vbsService.submitQueryResultLog('interaction');
   }
 
   sanitizeUrl(url: string): SafeUrl {
