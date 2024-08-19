@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { GlobalConstantsService } from 'src/app/shared/config/services/global-constants.service';
 import { NodeServerConnectionService } from '../nodeserver-connection/nodeserver-connection.service';
-import { WSServerStatus } from 'src/app/shared/config/global-constants';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -11,7 +10,6 @@ export class UrlRetrievalService {
   private baseThumbsUrl: string = '';
   private baseThumbsXLUrl: string = '';
   private baseVideosUrl: string = '';
-  private explorationSubscription: any;
   nodeServerInfo: string | undefined;
 
   private explorationResultsSource = new BehaviorSubject<Array<string>>([]);

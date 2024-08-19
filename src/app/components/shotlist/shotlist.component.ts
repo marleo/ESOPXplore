@@ -98,7 +98,7 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     }
   }
 
-  classifyVideoId(videoId: string) {
+  classifyVideoId(videoId: string) { //TODO: Check if this is the correct way to classify the videoId
     const patternFiveNumbers = /^\d{5}$/;
     const patternLHE = /^LHE\d{2}$/;
     const patternThreeUnderscores = /^[^\s_]+(_[^\s_]+){2}$/;
@@ -110,7 +110,7 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
     } else if (patternThreeUnderscores.test(videoId)) {
       return 'mvk';
     } else {
-      return 'unknown';
+      return 'esop';
     }
   }
 

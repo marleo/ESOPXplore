@@ -240,26 +240,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     }
   }
 
-  shareVideo(i: number = -1) { //share the chosen video with all connected clients
-
-    let videoid = this.queryresult_videoid[this.selectedItem];
-    let frame = this.queryresult_frame[this.selectedItem];
-    let url = '/video/' + videoid + '/' + frame;
-
-    if (i != -1) {
-      videoid = this.queryresult_videoid[i];
-      frame = this.queryresult_frame[i];
-      url = '/video/' + videoid + '/' + frame;
-    }
-
-    let message = {
-      type: 'share',
-      url: url
-    }
-
-    this.sendToNodeServer(message);
-  }
-
   handleToastClose() { //Close the toast message
     this.showToast = false;
   }
@@ -691,7 +671,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
   performQuery(saveToHist: boolean = true) {
     //called from the paging buttons
     if (this.file_sim_keyframe && this.file_sim_pathPrefix) {
-      this.performFileSimilarityQuery(this.file_sim_keyframe, this.file_sim_pathPrefix, this.selectedPage);
+      this.performFileSimilarityQuery(this.file_sim_keyframe, this.selectedPage);
     }
     else if (this.previousQuery !== undefined && this.previousQuery.type === "similarityquery") {
       this.performSimilarityQuery(parseInt(this.previousQuery.query));
@@ -707,13 +687,8 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       return;
     }
 
-    if (qi == '*' && this.selectedQueryType !== 'videoid') {
-      this.messageBar.showErrorMessage('* queries work only for VideoId');
-      return;
-    }
-
-    if (qi == '*' && this.selectedQueryType === 'videoid' && (this.selectedVideoFiltering !== 'first' || this.selectedDataset === 'v3c')) {
-      this.messageBar.showErrorMessage('* queries work only with MVK or LHE and Video Filter (First/v)');
+    if (qi == '*' && this.selectedQueryType !== 'videoid' || qi == '*' && this.selectedVideoFiltering !== 'first') {
+      this.messageBar.showErrorMessage('* queries work only for VideoId and Video Filter (First/v)');
       return;
     }
 
@@ -772,7 +747,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
 
   performSimilarityQuery(serveridx: number) {
     if (this.nodeService.connectionState === WSServerStatus.CONNECTED) {
-      //alert(`search for ${i} ==> ${idx}`);
       console.log('similarity-query for ', serveridx);
       this.queryBaseURL = this.getBaseURL();
       let msg = {
@@ -791,8 +765,7 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
     }
   }
 
-  performFileSimilarityQuery(keyframe: string, pathprefix: string = this.datasetBase, selectedPage: string = "1") {
-    //this.router.navigate(['filesimilarity',keyframe,this.datasetBase,selectedPage]); //or navigateByUrl(`/video/${videoid}`)
+  performFileSimilarityQuery(keyframe: string, selectedPage: string = "1") {
     let target = '_blank';
     if (this.file_sim_keyframe === keyframe) {
       target = '_self';
@@ -933,10 +906,6 @@ export class QueryComponent implements AfterViewInit, VbsServiceCommunication {
       this.clipService.connectToServer();
     }
   }
-
-  /***************************************************************************
-  * Submission to VBS Server *************************************************
-  ****************************************************************************/
 
   get displayQueryResult() {
     return this.queryresults;

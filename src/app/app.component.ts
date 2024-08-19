@@ -2,7 +2,6 @@ import { Component, AfterViewInit } from '@angular/core';
 import { WSServerStatus } from './shared/config/global-constants';
 import { NodeServerConnectionService } from './services/nodeserver-connection/nodeserver-connection.service';
 import { ClipServerConnectionService } from './services/clipserver-connection/clipserver-connection.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -15,8 +14,7 @@ export class AppComponent implements AfterViewInit {
 
   constructor(
     public nodeService: NodeServerConnectionService,
-    public clipService: ClipServerConnectionService,
-    private router: Router) {
+    public clipService: ClipServerConnectionService,) {
     this.nodeService.messages.subscribe(msg => {
       if ('wsstatus' in msg) {
         console.log('node-notification: connected');
@@ -51,10 +49,6 @@ export class AppComponent implements AfterViewInit {
   /****************************************************************************
    * WebSockets (CLIP and Node.js)
    ****************************************************************************/
-
-  handleNodeMessage(msg: any) {
-
-  }
 
   checkNodeConnection() {
     if (this.nodeService.connectionState !== WSServerStatus.CONNECTED) {

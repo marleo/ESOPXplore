@@ -44,7 +44,6 @@ export class NodeServerConnectionService {
     this.messages = <Subject<Message>>this.connectToWebsocket(this.globalConstants.nodeServerURL).pipe(
       map(
         (response: MessageEvent): Message => {
-          //console.log(`node-server: ${response.data}`);
           let data = JSON.parse(response.data)
           return data;
         }
@@ -70,7 +69,6 @@ export class NodeServerConnectionService {
         obs.next(new MessageEvent('message', msg));
       }
       ws.onmessage = (msg) => {
-        //console.log("received: " + msg.data);
         let d = JSON.parse(msg.data);
         //console.log(d);
         if (d.type == 'videofps' && d.synchronous == true) {
@@ -81,9 +79,6 @@ export class NodeServerConnectionService {
             this.pendingRequests.delete(d.correlationId);
           }
         } else {
-          /*if (d.type !== 'videofps') {
-            console.log('message from node-server');
-          }*/
           obs.next(msg);
         }
       };
@@ -106,9 +101,6 @@ export class NodeServerConnectionService {
         if (ws.readyState === WebSocket.OPEN) {
           let strObj = JSON.stringify(data);
           ws.send(strObj);
-          /*if (!strObj.includes('videofps')) {
-            console.log('Sent to node-server: ', data);
-          }*/
         }
       }
     };
@@ -130,7 +122,6 @@ export class NodeServerConnectionService {
   }
 
   private generateCorrelationId(): string {
-    // Generate a unique ID
     return Math.random().toString(36).substring(2, 15);
   }
 }

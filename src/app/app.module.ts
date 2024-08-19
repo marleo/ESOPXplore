@@ -30,7 +30,6 @@ import { StatusBarComponent } from './components/status-bar/status-bar.component
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { HistoryDialogComponent } from './dialogues/history-dialog/history-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ToastComponent } from './dialogues/toast/toast.component';
 
 @NgModule({
   declarations: [
@@ -43,10 +42,8 @@ import { ToastComponent } from './dialogues/toast/toast.component';
     ExplDialogComponent,
     StatusBarComponent,
     HistoryDialogComponent,
-    ToastComponent
   ],
   exports: [
-    ToastComponent
   ],
   imports: [
     BrowserModule,
