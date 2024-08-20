@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { VbsServiceCommunication } from '../../shared/interfaces/vbs-task-interface';
 import { NodeServerConnectionService } from '../../services/nodeserver-connection/nodeserver-connection.service';
 import { ClipServerConnectionService } from '../../services/clipserver-connection/clipserver-connection.service';
 
@@ -8,7 +7,7 @@ import { ClipServerConnectionService } from '../../services/clipserver-connectio
   templateUrl: './status-bar.component.html',
   styleUrls: ['./status-bar.component.scss']
 })
-export class StatusBarComponent implements VbsServiceCommunication {
+export class StatusBarComponent {
   @Output() answerFieldFocusChange = new EventEmitter<boolean>();
 
   statusTaskRemainingTime: string = '';

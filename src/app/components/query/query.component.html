@@ -1,6 +1,5 @@
 <div class="queryarea">
   <div class="topBar">
-    
       <a routerLink="/query" (click)="reloadComponent()"><img class="logo" src="assets/diveXplore_.png"></a>
       <div class="top-bar-left">
       <div class="select-wrapper">
@@ -18,15 +17,12 @@
         </select>
       </div>
     </div>
-
     <div class="inputGroup">
       <input class="inputField" type="text" id="queryinput" name="queryinput" ngModel #inputfield
         [(ngModel)]="queryinput" (keyup.enter)="performNewTextQuery()" (focus)="onQueryInputFocus()"
         (blur)="onQueryInputBlur()" placeholder="Input your query..." autofocus />
     </div>
     <button id="searchButton" class="basicButton" (click)="performNewTextQuery()">Search</button>
-
-
     <div class="top-bar-right">
       <button id="resetButton" class="basicButton" (click)="resetQuery()">Reset</button>
       <button id="historyToggle" class="basicButton" (click)="showHistory()">History</button>
@@ -39,8 +35,6 @@
     </div>
   </div>
 </div>
-
-<!-- Config Modal -->
 <div class="modal fade" id="configModal" tabindex="-1" role="dialog" aria-labelledby="configModalLabel"
   aria-hidden="true" *ngIf="showConfigForm">
   <div class="modal-dialog" role="document">
@@ -54,7 +48,6 @@
     </div>
   </div>
 </div>
-
 <div class="pagination">
   <div class="empty"></div>
   <div class="pagination-controls">
@@ -69,10 +62,7 @@
   </div>
   <button id="newTab" class="basicButton" (click)="newTab()">+Tab</button>
 </div>
-
-
 <br />
-
 <div class="queryresults-wrapper">
   <div class="backdrop" *ngIf="showPreview" (click)="closeVideoPreview()"></div>
   <div *ngIf="showPreview" class="videopreview">
@@ -103,7 +93,6 @@
         (click)="closeVideoPreview()">
       <div *ngIf="currentContent === 'video'" class="videopreviewimage">
         <video #videopreview [src]="videoPlayPreview" controls></video>
-        <!-- <img [src]="videoSummaryLargePreview" (click)="closeVideoPreview()"> -->
       </div>
     </div>
   </div>
@@ -133,10 +122,8 @@
 </div>
 
 <app-help-section *ngIf="showHelpActive" (clickOnClose)="showHelpActive = false"></app-help-section>
-
 <app-history-dialog *ngIf="showHistoryActive" (clickOnClose)="showHistoryActive = false"
   (historySelected)="performHistoryQuery($event)"></app-history-dialog>
-
 <app-message-bar></app-message-bar>
 <app-status-bar (answerFieldFocusChange)="handleAnswerFieldFocusChange($event)"></app-status-bar>
 

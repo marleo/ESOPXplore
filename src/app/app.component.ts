@@ -15,7 +15,7 @@ export class AppComponent implements AfterViewInit {
   constructor(
     public nodeService: NodeServerConnectionService,
     public clipService: ClipServerConnectionService,) {
-    this.nodeService.messages.subscribe(msg => {
+    this.nodeService.messages.subscribe((msg: { content: any; }) => {
       if ('wsstatus' in msg) {
         console.log('node-notification: connected');
       } else {

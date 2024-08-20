@@ -1,7 +1,6 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { ConfigService } from '../../shared/config/services/config.service';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { LocalConfig } from '../../shared/config/local-config';
 
 @Component({
   selector: 'app-config-form',
@@ -23,21 +22,17 @@ export class ConfigFormComponent implements OnInit {
       config_RESULTS_PER_PAGE: 35,
       config_MAX_RESULTS_TO_RETURN: 1000,
       config_IMAGE_WIDTH: 236,
-      // ...add other fields
     });
   }
 
   ngOnInit(): void {
-    // Fetching the current configuration from ConfigService
     const config = this.configService.getConfiguration();
-
-    // Setting the form fields with the configuration values
     this.configForm.patchValue(config);
   }
 
 
   onSave() {
     this.configService.updateConfiguration(this.configForm.value);
-    this.closeForm.emit(); // Notify the parent component
+    this.closeForm.emit();
   }
 }

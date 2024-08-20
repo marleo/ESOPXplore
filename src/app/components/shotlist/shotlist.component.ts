@@ -1,7 +1,6 @@
 import { ViewChild, ElementRef, AfterViewInit, Component } from '@angular/core';
 import { ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { VbsServiceCommunication } from '../../shared/interfaces/vbs-task-interface';
 import { NodeServerConnectionService } from '../../services/nodeserver-connection/nodeserver-connection.service';
 import { ClipServerConnectionService } from '../../services/clipserver-connection/clipserver-connection.service';
 import { formatAsTime, GlobalConstants, WSServerStatus } from '../../shared/config/global-constants';
@@ -16,7 +15,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
   styleUrls: ['./shotlist.component.scss']
 })
 
-export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication {
+export class ShotlistComponent implements AfterViewInit {
   videoid: string | undefined;
   framenumber: string | undefined;
   videoURL: SafeUrl = ''
@@ -24,8 +23,8 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
   timelabels: Array<string> = [];
   framenumbers: Array<string> = [];
 
-  public statusTaskInfoText: string = ""; //property binding
-  statusTaskRemainingTime: string = ""; //property binding
+  public statusTaskInfoText: string = "";
+  statusTaskRemainingTime: string = "";
 
   imgWidth = this.globalConstants.imageWidth;
   imgHeight = this.globalConstants.imageWidth / GlobalConstants.imgRatio;
@@ -115,13 +114,10 @@ export class ShotlistComponent implements AfterViewInit, VbsServiceCommunication
   }
 
   performFileSimilarityQuery(keyframe: string) {
-    //this.router.navigate(['filesimilarity',keyframe,this.datasetBase]); //or navigateByUrl(`/video/${videoid}`)
-    let dataset = this.classifyVideoId(this.videoid!);
-    //console.log(this.videoid + " --> " + dataset);
-    window.open('filesimilarity/' + encodeURIComponent(keyframe.replace('.jpg', GlobalConstants.replaceJPG_back2)) + '/' + dataset + '/' + encodeURIComponent(this.datasetBase), '_blank');
+    window.open('filesimilarity/' + encodeURIComponent(keyframe.replace('.jpg', GlobalConstants.replaceJPG_back2)) + '/esop/' + encodeURIComponent(this.datasetBase), '_blank'); //TODO: Don't hardcode the dataset ("esop")
   }
 
-  onVideoPlayerLoaded(event: any) {
+  onVideoPlayerLoaded() {
     console.log('video player loaded');
     if (this.framenumber) {
       this.gotoTimeOfFrame(parseInt(this.framenumber));

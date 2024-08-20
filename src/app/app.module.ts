@@ -47,12 +47,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   ],
   imports: [
     BrowserModule,
-    ApiModule.forRoot(() => {
-      return new Configuration({
-        basePath: GlobalConstants.configVBSSERVER
-        , withCredentials: true
-      });
-    }),
     AppRoutingModule,
     MatTooltipModule,
     HttpClientModule,
