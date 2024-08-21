@@ -739,11 +739,18 @@ export class QueryComponent implements AfterViewInit {
   }
 
   performFileSimilarityQuery(keyframe: string, selectedPage: string = "1") {
+    console.log('file-similarity-query for ', keyframe);
+
+    let filename = keyframe.split('_');
+    let videoid = filename.slice(0, filename.length - 1).join('_');
+    let parts = filename[filename.length - 1];
+    let framenumber = parts.split('.')[0];
+
     let target = '_blank';
     if (this.file_sim_keyframe === keyframe) {
       target = '_self';
     }
-    window.open('filesimilarity/' + encodeURIComponent(keyframe.replace('.jpg', GlobalConstants.replaceJPG_back2)) + '/' + this.selectedDataset + '/' + encodeURIComponent(this.datasetBase) + '/' + selectedPage, target);
+    window.open('filesimilarity/' + encodeURIComponent(keyframe.replace('.jpg', GlobalConstants.replaceJPG_back2)) + '/' + this.selectedDataset + '/' + encodeURIComponent(videoid) + '/' + selectedPage, target);
   }
 
   sendFileSimilarityQuery(keyframe: string, pathprefix: string) {
@@ -862,6 +869,8 @@ export class QueryComponent implements AfterViewInit {
       let videoid = filename.slice(0, filename.length - 1).join('_');
       let parts = filename[filename.length - 1];
       let framenumber = parts.split('.')[0];
+
+      console.log("qc: handleQueryResponseMessage: " + e + " " + videoid + " " + framenumber + " - " + filename);
 
       this.queryresults.push(e);
       this.queryresult_videoid.push(videoid);
