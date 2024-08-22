@@ -1,51 +1,51 @@
-# Divexplore
+# ESOPXplore
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.0.4.
+ESOPXplore is a lecture video retrieval tool consiting of a suite of scripts for preprocessing videos, two servers to host a FAISS index as well as a NodeJS server and a Angular frontend. 
+This project is open-source under the GPL license and welcomes contributions from the community.
 
-## Development server
+## Features
+- Automatically generate relevant keyframes from a set of lecture videos.
+- Extract text and speech from the keyframes/video and store them in a MongoDB.
+- Intuitive Frontend to retrieve video segments/keyframes from certain lectures.
+  - You can choose between different query types, depending on your needs (Query for text, speech, videoid, similar keyframes)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Preprocessing/Keyframe extraction
 
-## Code scaffolding
+TODO
 
-Run `ng generate component components/component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Installation
+To install and use ESOPXplore, follow these steps:
 
-## Build
+1. Clone the repository
+```bash
+git clone https://github.com/marleo/ESOPXplore.git
+```
+2. Navigate to the backend and start the FAISS and node server
+```bash
+cd ESOPXplore_server/ESOPXplore_node
+npm start
+```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+cd ESOPXplore_server/ESOPXplore_faiss
+python3 makeIndexVBSopenclip.py {keyframe_root_directory} {faiss_csv_directory}
+```
+3. Navigate to the frontend directory and start it
+```bash
+cd ESOPXplore
+ng serve
+```
 
-## Running unit tests
+## Contributing 
+All contributions are welcome! To contribute:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+1. Fork the repository
+2. Create new branch for your feature or bugfix
+3. Submit a pull request
 
-## Running end-to-end tests
+## License
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](https://github.com/marleo/ESOPXplore/blob/main/LICENSE) file for details.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
-
-
-# OpenAPI Integration
-
-run `npm install @openapitools/openapi-generator-cli -g`
-(run `npm install -g ng-openapi-gen`)
-
-Next, add the following lines to your `package.json` file:
-
-  "scripts": {
-    "gen-dres-client": "openapi-generator-cli generate -g typescript-angular -i https://raw.githubusercontent.com/dres-dev/DRES/master/doc/oas-client.json -o openapi/dres --skip-validate-spec --additional-properties npmName=@dres-client-openapi/api,ngVersion=13.0.0,enumPropertyNaming=original",
-    "gen-dres-dev-client": "openapi-generator-cli generate -g typescript-angular -i https://raw.githubusercontent.com/dres-dev/DRES/dev/doc/oas-client.json -o openapi/dres --skip-validate-spec --additional-properties npmName=@dres-client-openapi/api,ngVersion=13.0.0,enumPropertyNaming=original"
-  },
-  
-  "dependencies": {
-    "@openapitools/openapi-generator-cli": "2.4.26"
-  },
-  
-Finally, generate the TypeScript files with these commands:
-`npm run-script gen-dres-client`
-`npm run-script gen-dres-dev-client`
-
-Simply import the generated files like this:
+## Contact
+If you have any questions, feel free to open an issue or contact mario_leopold@aau.at
 `import {SubmissionService} from '../../openapi/dres/api/submission.service';`
