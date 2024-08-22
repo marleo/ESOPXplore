@@ -50,4 +50,3 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Se
 
 ## Contact
 If you have any questions, feel free to open an issue or contact mario_leopold@aau.at
-`import {SubmissionService} from '../../openapi/dres/api/submission.service';`
