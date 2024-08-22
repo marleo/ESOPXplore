@@ -13,8 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ShotlistComponent } from './components/shotlist/shotlist.component';
 import { ApiModule, Configuration } from 'openapi/dres';
 import { GlobalConstants } from './shared/config/global-constants';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { VBSServerConnectionService } from './services/vbsserver-connection/vbsserver-connection.service';
+import { HttpClientModule } from '@angular/common/http';
 import { QueryComponent } from './components/query/query.component';
 
 import { MatInputModule } from '@angular/material/input';
@@ -31,7 +30,6 @@ import { StatusBarComponent } from './components/status-bar/status-bar.component
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { HistoryDialogComponent } from './dialogues/history-dialog/history-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ToastComponent } from './dialogues/toast/toast.component';
 
 @NgModule({
   declarations: [
@@ -44,19 +42,11 @@ import { ToastComponent } from './dialogues/toast/toast.component';
     ExplDialogComponent,
     StatusBarComponent,
     HistoryDialogComponent,
-    ToastComponent
   ],
   exports: [
-    ToastComponent
   ],
   imports: [
     BrowserModule,
-    ApiModule.forRoot(() => {
-      return new Configuration({
-        basePath: GlobalConstants.configVBSSERVER
-        , withCredentials: true
-      });
-    }),
     AppRoutingModule,
     MatTooltipModule,
     HttpClientModule,
@@ -73,7 +63,7 @@ import { ToastComponent } from './dialogues/toast/toast.component';
     MatDialogModule,
     ScrollingModule
   ],
-  providers: [VBSServerConnectionService],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

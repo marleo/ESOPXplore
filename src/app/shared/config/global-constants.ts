@@ -26,16 +26,10 @@ export interface QueryType {
 }
 
 export class GlobalConstants {
-  public static configVBSSERVER = 'https://vbs.videobrowsing.org';
+  public static replacePNG2 = '.jpg';
+  public static replaceJPG_back2 = '.jpg';
 
-  public static replacePNG2 = '.jpg'; //display
-  public static replaceJPG_back2 = '.jpg'; //'.jpg'; //file-similarity
-
-  //public static resultsPerPage = 35;
-  //public static maxResultsToReturn = this.resultsPerPage*41; //780; //1200; //10000;
   public static imgRatio = 320.0 / 180.0;
-  //public static imgWidth = 236; 
-  //public static imgHeight = this.imgWidth/this.imgRatio;
 }
 
 export function twoDigits(str: string): string {
@@ -63,20 +57,3 @@ export function formatAsTime(frame: string, fps: number, withFrames: boolean = t
 export function getTimestampInSeconds() {
   return Math.floor(Date.now() / 1000)
 }
-/**
- * EXAMPLE OF LOCAL CONFIG (local-config.ts)
- * 
-export class LocalConfig {
-    public static config_CLIP_SERVER_HOST = 'extreme00.itec.aau.at'; //localhost
-    public static config_CLIP_SERVER_PORT = '8001';
-
-    public static config_NODE_SERVER_HOST = 'extreme00.itec.aau.at'
-    public static config_NODE_SERVER_PORT = '8080';
-    
-    public static config_DATA_BASE_URL = 'http://extreme00.itec.aau.at/diveXplore/'; //http://localhost/divexplore/
-    public static config_DATA_BASE_URL_VIDEOS = 'http://videobrowsing.org/v3c/';
-
-    public static config_USER = 'diveXplore1';
-    public static config_PASS = 'Wy?j}7&3';
-}
- */

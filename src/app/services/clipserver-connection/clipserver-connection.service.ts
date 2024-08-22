@@ -33,7 +33,6 @@ export class ClipServerConnectionService {
     this.messages = <Subject<Message>>this.connectToWebsocket(this.globalConstants.clipServerURL).pipe(
       map(
         (response: MessageEvent): Message => {
-          //console.log(`CLIP-server: ${response.data}`);
           let data = JSON.parse(response.data)
           return data;
         }
@@ -78,7 +77,6 @@ export class ClipServerConnectionService {
       error: (err: any) => { },
       complete: () => { },
       next: (data: Object) => {
-        //console.log('Sent to CLIP-server: ', data);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(data));
         }

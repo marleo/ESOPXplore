@@ -1,6 +1,5 @@
 <div class="queryarea">
   <div class="topBar">
-    
       <a routerLink="/query" (click)="reloadComponent()"><img class="logo" src="assets/diveXplore_.png"></a>
       <div class="top-bar-left">
       <div class="select-wrapper">
@@ -18,27 +17,13 @@
         </select>
       </div>
     </div>
-
     <div class="inputGroup">
       <input class="inputField" type="text" id="queryinput" name="queryinput" ngModel #inputfield
         [(ngModel)]="queryinput" (keyup.enter)="performNewTextQuery()" (focus)="onQueryInputFocus()"
         (blur)="onQueryInputBlur()" placeholder="Input your query..." autofocus />
-      <div *ngFor="let q of temporalQueries; let i = index" class="additionalQuery">
-        <div class="arrowDown">&#x25BC;</div>
-        <div class="inputWithIcon">
-          <input class="inputField" type="text" [(ngModel)]="q.query" id="additionalQueryInput{{i}}"
-            (keyup.enter)="performNewTextQuery()" (focus)="onQueryInputFocus()" (blur)="onQueryInputBlur()"
-            placeholder="What should happen after?" />
-          <span class="closeIcon" (click)="removeTemporalQuery(i)">&#x00D7;</span>
-        </div>
-      </div>
     </div>
     <button id="searchButton" class="basicButton" (click)="performNewTextQuery()">Search</button>
-
-
     <div class="top-bar-right">
-      <button *ngIf="selectedQueryType == 'textquery'" class="basicButton" (click)="addTemporalQuery()">Add Temporal
-        Query</button>
       <button id="resetButton" class="basicButton" (click)="resetQuery()">Reset</button>
       <button id="historyToggle" class="basicButton" (click)="showHistory()">History</button>
       <button class="basicButton" id="helpButton" mat-icon-button (click)="showHelp()">
@@ -50,8 +35,6 @@
     </div>
   </div>
 </div>
-
-<!-- Config Modal -->
 <div class="modal fade" id="configModal" tabindex="-1" role="dialog" aria-labelledby="configModalLabel"
   aria-hidden="true" *ngIf="showConfigForm">
   <div class="modal-dialog" role="document">
@@ -65,7 +48,6 @@
     </div>
   </div>
 </div>
-
 <div class="pagination">
   <div class="empty"></div>
   <div class="pagination-controls">
@@ -80,10 +62,7 @@
   </div>
   <button id="newTab" class="basicButton" (click)="newTab()">+Tab</button>
 </div>
-
-
 <br />
-
 <div class="queryresults-wrapper">
   <div class="backdrop" *ngIf="showPreview" (click)="closeVideoPreview()"></div>
   <div *ngIf="showPreview" class="videopreview">
@@ -102,7 +81,7 @@
         (click)="showVideoShots(this.queryresult_videoid[this.selectedItem],this.queryresult_frame[this.selectedItem])">Video
         {{this.queryresult_videoid[this.selectedItem]}}
         ({{this.selectedItem+1}}/{{this.queryresult_videoid.length}})</button><br />
-        <button class="share-button" (click)="shareVideo()" matTooltip="Share Keyframe" matTooltipPosition="above" mat-icon-button>
+        <button class="share-button" matTooltip="Share Keyframe" matTooltipPosition="above" mat-icon-button>
           <mat-icon>share</mat-icon>
         </button>
         <button class="close-button" (click)="closeVideoPreview()" mat-icon-button>
@@ -112,37 +91,8 @@
     <div class="videopreview-content">
       <img *ngIf="currentContent === 'image'" [src]="videoLargePreview" class="videopreviewimage"
         (click)="closeVideoPreview()">
-      <img *ngIf="currentContent === 'thumbnail'" [src]="videoSummaryPreview" class="videopreviewimage"
-        (click)="closeVideoPreview()" (mouseenter)="this.isOverImage=true" (mouseleave)="this.isOverImage=false">
       <div *ngIf="currentContent === 'video'" class="videopreviewimage">
         <video #videopreview [src]="videoPlayPreview" controls></video>
-        <!-- <img [src]="videoSummaryLargePreview" (click)="closeVideoPreview()"> -->
-      </div>
-      <div *ngIf="currentContent === 'explore'" class="explore-container">
-        <div class="explore-ui-overlay">
-          <div class="explore-ui-slider">
-            <input type="range" min="1" max="5" [(ngModel)]="columnsCountExplore">
-            <p>Columns: {{columnsCountExplore}}</p>
-          </div>
-          <button (click)="loadMoreImages()" class="load-more-button">Load more</button>
-        </div>
-        <div #scrollableContainer class="explore-scroll-container">
-          <img *ngFor="let imgUrl of displayedImages" loading="lazy" [src]="imgUrl" class="exploreimage"
-            [style.width.%]="100 / columnsCountExplore - 2" (click)="exploreToShotlist(imgUrl)">
-        </div>
-      </div>
-      <div *ngIf="currentContent==='shots'" class="shots-container">
-        <div class="shots-ui-overlay">
-          <div class="shots-ui-slider">
-            <input type="range" min="5" max="10" [(ngModel)]="columnsCountShots">
-            <p>Columns: {{columnsCountShots}}</p>
-          </div>
-          <button (click)="loadMoreShots()" class="load-more-button">Load more</button>
-        </div>
-        <div #scrollableContainer class="shots-scroll-container">
-          <img *ngFor="let shotUrl of displayedShots" loading="lazy" [src]="shotUrl" class="shotimage"
-            [style.width.%]="100 / columnsCountShots - 2" (click)="shotPreviewToShotList(shotUrl)">
-        </div>
       </div>
     </div>
   </div>
@@ -150,11 +100,10 @@
     *ngFor="let item of displayQueryResult; let i = index">
     <img [src]="constructedUrl(i, item)" width="{{imgWidth}}" height="{{imgHeight}}"
       (click)="selectItemAndShowSummary(i,$event)"
-      [ngClass]="{'blueborder': this.selectedItem == i, 'submitted': isVideoSubmitted(item)}">
+      [ngClass]="{'blueborder': this.selectedItem == i}">
     <div class="lefttopcorner">
       <span *ngIf="showButtons === i && this.queryresult_frame[i] !== 'summary'"
-        class="resultnum" (click)="shareVideo(i)">{{getTimeInformationFor(i)}}</span>
-      <span *ngIf="isVideoSubmitted(item)" class="submitted-text">Submitted</span>
+        class="resultnum">{{getTimeInformationFor(i)}}</span>
     </div>
     <div class="righttopcorner">
       <button class="smalllabel" (click)="this.queryForVideo(i)">{{this.queryresult_videoid[i]}}</button>
@@ -163,10 +112,6 @@
       <button *ngIf="showButtons === i" (click)="showVideoShots(this.queryresult_videoid[i],this.queryresult_frame[i])"
         class="resultaction shotbutton">Shots</button>
       <button *ngIf="showButtons == i" (click)="performFileSimilarityQuery(item)" class="resultaction similarbutton">Similar</button>
-    </div>
-    <div class="rightbottomcorner">
-      <button *ngIf="showButtons === i && !this.isVideoResult(this.querydataset)" class="submitbutton"
-        (click)="submitResult(i)">Submit</button>
     </div>
   </div>
 </div>
@@ -177,20 +122,9 @@
 </div>
 
 <app-help-section *ngIf="showHelpActive" (clickOnClose)="showHelpActive = false"></app-help-section>
-
 <app-history-dialog *ngIf="showHistoryActive" (clickOnClose)="showHistoryActive = false"
   (historySelected)="performHistoryQuery($event)"></app-history-dialog>
-
 <app-message-bar></app-message-bar>
-
-<app-toast 
-[toastMessage]="toastMessage"
-[showToast]="showToast"
-[toastLink]="toastLink"
-[imageSrc]="toastImageSrc"
-(closeToast)="handleToastClose()">
-</app-toast>
-
 <app-status-bar (answerFieldFocusChange)="handleAnswerFieldFocusChange($event)"></app-status-bar>
 
 <br />&nbsp;

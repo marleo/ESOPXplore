@@ -9,14 +9,6 @@ export class GlobalConstantsService {
     console.log('GlobalConstantsService created');
   }
 
-  get configUSER(): string {
-    return this.configService.getConfiguration().config_USER;
-  }
-
-  get configPASS(): string {
-    return this.configService.getConfiguration().config_PASS;
-  }
-
   get clipServerURL(): string {
     const config = this.configService.getConfiguration();
     return `ws://${config.config_CLIP_SERVER_HOST}:${config.config_CLIP_SERVER_PORT}`;
@@ -65,14 +57,6 @@ export class GlobalConstantsService {
 
   get resultsPerPage(): number {
     return this.configService.getConfiguration().config_RESULTS_PER_PAGE;
-  }
-
-  get exploreResultsPerLoad(): string {
-    return this.configService.getConfiguration().config_EXPLORE_RESULTS_PER_LOAD;
-  }
-
-  get shotsResultsPerLoad(): string {
-    return this.configService.getConfiguration().config_SHOTS_RESULTS_PER_LOAD;
   }
 
   get maxResultsToReturn(): number {
