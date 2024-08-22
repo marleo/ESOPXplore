@@ -3,6 +3,8 @@
 ESOPXplore is a lecture video retrieval tool consiting of a suite of scripts for preprocessing videos, two servers to host a FAISS index as well as a NodeJS server and a Angular frontend. 
 This project is open-source under the GPL license and welcomes contributions from the community.
 
+![Screen_QueryResults](https://github.com/user-attachments/assets/108c83da-5250-4226-9270-0e525cebd0a4)
+
 ## Features
 - Automatically generate relevant keyframes from a set of lecture videos.
 - Extract text and speech from the keyframes/video and store them in a MongoDB.
