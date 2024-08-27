@@ -22,6 +22,13 @@ To install and use ESOPXplore, follow these steps:
 ```bash
 git clone https://github.com/marleo/ESOPXplore.git
 ```
+2. Install required dependencies and execute the scripts
+```bash
+cd scripts
+# Create new environment: python3 -m venv env
+python3 setup.py
+python3 master_script.py
+```
 2. Navigate to the backend and start the FAISS and node server
 ```bash
 cd ESOPXplore_server/ESOPXplore_node
